@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "vaultwarden.fullname" . }}
+  labels:
+    {{- include "vaultwarden.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "vaultwarden.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "vaultwarden.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "vaultwarden.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.persistence.enabled }}        
+            - name: vaultwarden-pvc
+              mountPath: /data
+            {{- end }}
+          env:
+            - name: DATA_FOLDER
+              value: {{ .Values.vaultwarden.config.dataFolder | quote }}
+            - name: ROCKET_PORT
+              value: "80"
+            - name: DATABASE_URL
+              value: {{ .Values.database.url | quote }}
+            - name: TMP_FOLDER
+              value: {{ .Values.vaultwarden.config.tmpFolder | quote }}
+            - name: EMERGENCY_ACCESS
+              value: {{ .Values.vaultwarden.config.emergencyAccess | quote }}
+            - name: JOB_POLL_INTERVAL_MS
+              value: {{ .Values.vaultwarden.config.jobInterval | quote }}
+            - name: SEND_PURGE_SCHEDULE 
+              value: {{ .Values.vaultwarden.config.purgeSchedule | quote }}
+            - name: INCOMPLETE_2FA_SCHEDULE
+              value: {{ .Values.vaultwarden.config.twoFaPurge | quote }}
+            - name: EVENT_CLEANUP_SCHEDULE
+              value: {{ .Values.vaultwarden.config.purgeSchedule | quote }}
+            - name: EXTENDED_LOGGING
+              value: {{ .Values.vaultwarden.config.extendedLogging | quote }}
+            - name: LOG_TIMESTAMP_FORMAT 
+              value: {{ .Values.vaultwarden.config.logTimeFormat | quote }}
+            - name: LOG_FILE
+              value: {{ .Values.vaultwarden.config.logFolder | quote }}
+            - name: USE_SYSLOG
+              value: {{ .Values.vaultwarden.config.useSyslog | quote }}
+            - name: LOG_LEVEL
+              value: {{ .Values.vaultwarden.config.logLevel | quote }}
+            - name: ENABLE_DB_WAL
+              value: {{ .Values.database.wal | quote }}
+            - name: DB_CONNECTION_RETRIES
+              value: {{ .Values.database.maxRetries | quote }}
+            - name: SIGNUPS_ALLOWED
+              value: {{ .Values.vaultwarden.config.signUpAllowed | quote }}
+            - name: ADMIN_TOKEN
+              value: {{ .Values.vaultwarden.config.adminToken | quote }}
+            - name: DISABLE_ADMIN_TOKEN
+              value: {{ .Values.vaultwarden.config.disableAdminToken | quote }}
+            - name: INVITATIONS_ALLOWED
+              value: {{ .Values.vaultwarden.config.invitationsAllowed | quote }}
+            - name: INVITATION_ORG_NAME
+              value: {{ .Values.vaultwarden.config.organisationName | quote }}
+            - name: INVITATION_EXPIRATION_HOURS
+              value: {{ .Values.vaultwarden.config.invitationExpireH | quote }}
+            - name: TRASH_AUTO_DELETE_DAYS
+              value: {{ .Values.vaultwarden.config.trashDeleteD | quote }}
+            - name: INCOMPLETE_2FA_TIME_LIMIT
+              value: {{ .Values.vaultwarden.login.TwofaDelayM | quote }}
+            - name: PASSWORD_ITERATIONS
+              value: {{ .Values.vaultwarden.config.passwordIterations | quote }}
+            - name: DOMAIN
+              value: {{ .Values.vaultwarden.config.domain | quote }}
+            - name: LOGIN_RATELIMIT_SECONDS
+              value: {{ .Values.vaultwarden.login.maxLoginSeconds | quote }}
+            - name: LOGIN_RATELIMIT_MAX_BURST
+              value: {{ .Values.vaultwarden.login.maxLoginTry | quote }}
+            - name: ADMIN_RATELIMIT_SECONDS
+              value: {{ .Values.vaultwarden.login.adminMaxLogingSeconds | quote }}
+            - name: ADMIN_RATELIMIT_MAX_BURST
+              value: {{ .Values.vaultwarden.login.adminMaxLoginTry | quote }}
+            - name: ADMIN_SESSION_LIFETIME
+              value: {{ .Values.vaultwarden.login.adminSessionLifetime | quote }}
+      volumes:                                                        
+      {{- if .Values.persistence.enabled }}
+        - name: vaultwarden-pvc
+          persistentVolumeClaim:
+            claimName: "{{ .Values.persistence.claimName }}"
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

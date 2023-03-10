@@ -1,0 +1,113 @@
+## in this file you'll find configurationfor this chart
+# some fields are empty on purpose and must be filled in order for the chart to work
+# keep in mind that vaultwarden NEED to use https in order to function properly
+
+replicaCount: 1
+image:
+  repository: vaultwarden/server
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+## this is the main fields to tweak vaultwarden
+# keep in mind that any inconsistency will likely make the pod crash !
+database: 
+  type: "postgresql"
+  wal: true
+  url: postgresql://user:user@vaultwarden-postgresql:5432/vaultwarden # string used to connect to postgresql, formated like so : postgresql://[[user]:[password]@]host[:port][/database]
+  maxConnections: "20"
+  maxRetries: "20"
+vaultwarden: # by default most options are suitables for individual use if you want to tweak more the install go to https://github.com/dani-garcia/vaultwarden/wiki
+  config: # directory configuration happen directly in the container
+    dataFolder: "/data"
+    logFolder: "/logs"
+    emergencyAccess: false
+    jobInterval: "30000"
+    purgeSchedule: "0 5 * * * *"
+    trashPurge: "0 5 0 * * *"
+    twoFaPurge: "30 * * * * *"
+    eventPurge: "0 10 0 * * *"
+    extendedLogging: true
+    logTimeFormat: "%Y-%m-%d %H:%M:%S.%3f"
+    useSyslog: false # forward vaultwardens logs to syslog
+    logLevel: "Info"
+    trashDeleteD: "30"
+    passwordIterations: 350000 # password hash strenght
+    tmpFolder: "/tmp"
+    signUpAllowed: false
+    adminToken: "admin" # password for web admin page MUST BE CHANGED !!!
+    disableAdminToken: false # admin page is accessed by typing 'yourdomain/admin' in url. If set to true, you'll have to set a diferent way to access admin page
+    invitationsAllowed: false # can user invite people to the vaultwarden
+    organisationName: "YourOrganisationName"
+    invitationExpireH: "24"
+    domain: "YouDomainName"
+  login:
+    maxLoginSeconds: "60"
+    maxLoginTry: "10"
+    adminMaxLoginSeconds: "300"
+    adminMaxLoginTry: "5"
+    adminSessionLifetime: "20"
+    TwoFaDelayM: "2"
+
+## handles postgresql configuration
+# this chart comes bundled with postgresql by default
+postgresql:
+  enabled: true
+  global:
+    postgresql:
+      auth:
+        postgrePassword: "admin"
+        username: "user"
+        password: "user"
+        database: "vaultwarden"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 80
+ingress:
+  enabled: true
+  className: ""
+  annotations:
+    kubernetes.io/ingress.class: nginx
+  hosts:
+    - host: # you must specify your web domain
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: 
+  #  - secretName: chart-example-tls
+    - hosts:
+      -  # you must specify your web domain
+
+# because of the nature of the serivice, it SHOULD be consistent, but that's up to you
+persistence:
+  claimName: vaultwarden-pvc
+  enabled: true
+  size: 2Gi # specify storage capacity
+  accessMode: ReadWriteOnce
+resources: {}
+
+# autoscalink is not impleted, if neede feel free to adjust this settings accordingly
+# you must configure helm/templates/hpa.yaml to enable autoscaling otherwise it wont work
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 60
+
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,2 @@
+Installation done !
+Hope you edited helm/values.yaml otherwise this chart wont work.

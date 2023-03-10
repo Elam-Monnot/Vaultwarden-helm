@@ -1,0 +1,10 @@
+apiVersion: v2
+name: vaultwarden
+description: A Helm chart for Kubernetes that deploys vaultwarden
+type: application
+dependencies:
+  - name: postgresql
+    version: 12.2.1
+    repository: https://charts.bitnami.com/bitnami
+version: 1.0.0-dev.2
+appVersion: 1.27.0
