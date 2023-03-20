@@ -15,7 +15,7 @@ helm install --create-namespace -n yourNameSpace yourReleaseName /path/to/chart
 ```
 ## Uninstall
 
-To uninstall the chart run the following commands :
+To uninstall the chart run the following commands :   
 *If installed in the default namespace, you won't be able to delete the namespace, delete each ressources instead.*
 
 **WARNING ! all volumes will be deleted and all data will be lost !**
