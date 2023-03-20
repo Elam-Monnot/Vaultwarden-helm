@@ -12,8 +12,8 @@ image:
 # keep in mind that any inconsistency will likely make the pod crash !
 database: 
   type: "postgresql"
-  wal: true
-  url: postgresql://user:user@vaultwarden-postgresql:5432/vaultwarden # string used to connect to postgresql, formated like so : postgresql://[[user]:[password]@]host[:port][/database]
+  wal: true # option that increase data integrety in case of crash or power malfunction in the database
+  url: postgresql://user:user@vaultwarden-postgresql:5432/vaultwarden # string used to connect to postgresql, formated like so : postgresql://[user]:[password]@]host[:port][/databaseName]
   maxConnections: "20"
   maxRetries: "20"
 vaultwarden: # by default most options are suitables for individual use if you want to tweak more the install go to https://github.com/dani-garcia/vaultwarden/wiki
@@ -63,7 +63,6 @@ postgresql:
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
-
 serviceAccount:
   create: false
   annotations: {}
@@ -72,7 +71,6 @@ serviceAccount:
 podAnnotations: {}
 podSecurityContext: {}
 securityContext: {}
-
 service:
   type: ClusterIP
   port: 80
@@ -82,16 +80,16 @@ ingress:
   annotations:
     kubernetes.io/ingress.class: nginx
   hosts:
-    - host: # you must specify your web domain
+    - host: # your web domain
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls: 
   #  - secretName: chart-example-tls
     - hosts:
-      -  # you must specify your web domain
+      -  # your web domain
 
-# because of the nature of the serivice, it SHOULD be consistent, but that's up to you
+# because of the nature of the service, it SHOULD be consistent, but that's up to you
 persistence:
   claimName: vaultwarden-pvc
   enabled: true
@@ -99,7 +97,7 @@ persistence:
   accessMode: ReadWriteOnce
 resources: {}
 
-# autoscalink is not impleted, if neede feel free to adjust this settings accordingly
+# autoscalink is not impleted, if needed feel free to adjust this settings accordingly
 # you must configure helm/templates/hpa.yaml to enable autoscaling otherwise it wont work
 autoscaling:
   enabled: false
